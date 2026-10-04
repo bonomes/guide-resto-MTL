@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Géocode les adresses du guide (Nominatim / OpenStreetMap) et les écrit dans le HTML.
 Usage : python3 geocode.py index.html
-Reprenable : les résultats sont gardés dans geo_cache_v2.json. ~1 requête/seconde (règle de Nominatim)."""
+Reprenable : les résultats sont gardés dans geo_cache_v3.json. ~1 requête/seconde (règle de Nominatim)."""
 import re, sys, json, time, os, urllib.request, urllib.parse
 path = sys.argv[1]
 html = open(path, encoding="utf-8").read()
@@ -14,12 +14,12 @@ for line in raw.split("\n"):
     name, a = f[1], f[3]
     m = re.match(r'^(\d+) ([A-Z])$', a)
     places[name] = f"{m.group(1)}, {ST[m.group(2)]}" if m else a
-cache = json.load(open("geo_cache_v2.json")) if os.path.exists("geo_cache_v2.json") else {}
+cache = json.load(open("geo_cache_v3.json")) if os.path.exists("geo_cache_v3.json") else {}
 missing = [n for n in places if n not in cache]
 print(f"{len(places)} adresses, {len(missing)} à géocoder")
 for i, n in enumerate(missing, 1):
     def nom(bounded):
-        p = {"format": "jsonv2", "limit": 1, "countrycodes": "ca", "q": places[n] + ", Québec"}
+        p = {"format": "jsonv2", "limit": 1, "countrycodes": "ca", "q": places[n] + (", Montréal" if places[n].count(",") <= 1 or re.search(r"(bureau|étage)", places[n].split(",")[-1], re.I) else "") + ", Québec"}
         if bounded: p.update({"viewbox": "-74.15,45.75,-73.30,45.35", "bounded": 1})  # région de Montréal
         req = urllib.request.Request("https://nominatim.openstreetmap.org/search?" + urllib.parse.urlencode(p),
                                      headers={"User-Agent": "guide-montreal-geocoder/1.0"})
@@ -31,7 +31,7 @@ for i, n in enumerate(missing, 1):
     except Exception as e:
         print("erreur", n, e); time.sleep(5); continue
     print(f"[{i}/{len(missing)}] {n} → {cache[n]}")
-    json.dump(cache, open("geo_cache_v2.json", "w"), ensure_ascii=False)
+    json.dump(cache, open("geo_cache_v3.json", "w"), ensure_ascii=False)
     time.sleep(1.1)
 geo = {n: c for n, c in cache.items() if c and n in places}
 out = re.sub(r'/\*GEO\*/.*?/\*END\*/', lambda m: "/*GEO*/" + json.dumps(geo, ensure_ascii=False) + "/*END*/", html, flags=re.S)
