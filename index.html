@@ -366,7 +366,7 @@ $("m").innerHTML=h||`<p class="empty">${sec==-2&&!fav.size?L().emptyFav:L().empt
 
 /* ---- Carte (Leaflet + OpenStreetMap) ---- */
 const GEO=/*GEO*/{}/*END*/;
-let GC={},gtok=0,map=null,mk=null;try{GC=JSON.parse(localStorage.getItem("geo2")||"{}")}catch(e){}
+let GC={},gtok=0,map=null,mk=null;try{GC=JSON.parse(localStorage.getItem("geo3")||"{}")}catch(e){}
 const pos=d=>GEO[d.n]||GC[d.n],gfail=new Set(),LFV="1.9.4",LFB="https://cdnjs.cloudflare.com/ajax/libs/leaflet/"+LFV+"/";
 function syncView(){const m=view=="map";$("m").hidden=m;$("map").hidden=!m;$("mv").textContent=m?L().listb:L().mapb;$("mv").setAttribute("aria-pressed",m);if(m)drawMap();else gtok++}
 function loadLF(ok){if(window.L&&window.L.map)return ok();if(!document.getElementById("lfc")){const c=document.createElement("link");c.id="lfc";c.rel="stylesheet";c.href=LFB+"leaflet.min.css";document.head.appendChild(c)}const j=document.createElement("script");j.src=LFB+"leaflet.min.js";j.onload=ok;j.onerror=()=>{$("cnt").textContent=L().nomap};document.head.appendChild(j)}
@@ -378,8 +378,8 @@ const fit=()=>{const ps=l.map(pos).filter(Boolean);if(ps.length)map.fitBounds(ps
 l.forEach(add);fit();
 const todo=l.filter(d=>!pos(d)&&!gfail.has(d.n));if(!todo.length)return;
 (async()=>{let i=0;for(const d of todo){if(tk!=gtok)return;$("cnt").textContent=base+" · "+L().geo+" "+(++i)+"/"+todo.length;
-try{const nm=async b=>(await fetch("https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=ca&q="+encodeURIComponent(d.a+", Québec")+(b?"&viewbox=-74.15,45.75,-73.30,45.35&bounded=1":""))).json();let j=await nm(1);if(!j[0]){await new Promise(r=>setTimeout(r,1100));j=await nm(0)}
-if(j[0]){GC[d.n]=[+j[0].lat,+j[0].lon];try{localStorage.setItem("geo2",JSON.stringify(GC))}catch(e){}if(tk==gtok)add(d)}else gfail.add(d.n)}catch(e){gfail.add(d.n)}
+try{const nm=async b=>(await fetch("https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=ca&q="+encodeURIComponent(d.a+((d.a.match(/,/g)||[]).length<=1||/(bureau|étage)\s*\d*$|\d+e étage$/i.test(d.a)?", Montréal":"")+", Québec")+(b?"&viewbox=-74.15,45.75,-73.30,45.35&bounded=1":""))).json();let j=await nm(1);if(!j[0]){await new Promise(r=>setTimeout(r,1100));j=await nm(0)}
+if(j[0]){GC[d.n]=[+j[0].lat,+j[0].lon];try{localStorage.setItem("geo3",JSON.stringify(GC))}catch(e){}if(tk==gtok)add(d)}else gfail.add(d.n)}catch(e){gfail.add(d.n)}
 await new Promise(r=>setTimeout(r,1100))}
 if(tk==gtok){$("cnt").textContent=base;fit()}})()})}
 $("mv").onclick=()=>{view=view=="map"?"list":"map";render();scrollTo(0,0)};
