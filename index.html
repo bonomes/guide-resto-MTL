@@ -306,7 +306,7 @@ emptyFav:"Aucun favori pour l’instant. Touchez l’étoile d’une adresse pou
 emptyNone:"Aucun résultat. Essayez un autre mot ou choisissez « Toutes ».",one:" résultat",many:" résultats",
 ft:"Vérifiez les horaires et les réservations avant de vous déplacer : plusieurs adresses affichent complet longtemps d’avance. Audit des adresses et des horaires : septembre 2026, à partir de sources en ligne. Les pastilles sont expliquées dans « Comment utiliser le guide ? ».",
 bd:{T:"Adresse temporaire",S:"Saisonnier",V:"Horaires à confirmer",F:"Fermé temporairement",E:"★ Excellent",I:"★★ Incontournable"},
-mapb:"🗺 Carte",listb:"☰ Liste",geo:"Localisation des adresses",nomap:"Carte indisponible : connexion requise.",
+mapb:"🗺 Carte",listb:"☰ Liste",geo:"Localisation des adresses",nomap:"Carte indisponible : connexion requise.",loc:"Ma position",here:"Vous êtes ici",locerr:"Position indisponible : vérifiez l’autorisation de localisation.",far:"Vous semblez être hors de la région de Montréal.",
 hps:"Comment utiliser le guide ?",
 hp:[["Vous découvrez le guide ?","Commencez par ★ Excellents : mes adresses à essayer absolument, dans toutes les catégories. Les ★★ Incontournables, le haut de la sélection, en font partie."],
 ["Vous savez ce que vous cherchez ?","Tapez un nom, une cuisine ou une rue dans la barre de recherche."],
@@ -326,7 +326,7 @@ emptyFav:"No favourites yet. Tap a place’s star to keep it here.",
 emptyNone:"No results. Try another word, or choose “All”.",one:" result",many:" results",
 ft:"Check hours and reservations before heading out: several spots book up well in advance. Addresses and hours audited: September 2026, from online sources. The badges are explained in “How to use this guide”.",
 bd:{T:"Temporary location",S:"Seasonal",V:"Hours to confirm",F:"Temporarily closed",E:"★ Excellent",I:"★★ Unmissable"},
-mapb:"🗺 Map",listb:"☰ List",geo:"Locating places",nomap:"Map unavailable: connection required.",
+mapb:"🗺 Map",listb:"☰ List",geo:"Locating places",nomap:"Map unavailable: connection required.",loc:"My location",here:"You are here",locerr:"Location unavailable: check your location permission.",far:"You seem to be outside the Montréal area.",
 hps:"How to use this guide",
 hp:[["New here?","Start with ★ Excellent: my must-try places, across all categories. The ★★ Unmissable picks, the top of the selection, are part of it."],
 ["Know what you’re looking for?","Type a name, a cuisine or a street in the search bar."],
@@ -371,7 +371,7 @@ const pos=d=>GEO[d.n]||GC[d.n],gfail=new Set(),LFV="1.9.4",LFB="https://cdnjs.cl
 function syncView(){const m=view=="map";$("m").hidden=m;$("map").hidden=!m;$("mv").textContent=m?L().listb:L().mapb;$("mv").setAttribute("aria-pressed",m);if(m)drawMap();else gtok++}
 function loadLF(ok){if(window.L&&window.L.map)return ok();if(!document.getElementById("lfc")){const c=document.createElement("link");c.id="lfc";c.rel="stylesheet";c.href=LFB+"leaflet.min.css";document.head.appendChild(c)}const j=document.createElement("script");j.src=LFB+"leaflet.min.js";j.onload=ok;j.onerror=()=>{$("cnt").textContent=L().nomap};document.head.appendChild(j)}
 function drawMap(){const tk=++gtok;loadLF(()=>{if(tk!=gtok)return;const LF=window.L;
-if(!map){map=LF.map("map");LF.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"© OpenStreetMap"}).addTo(map);mk=LF.layerGroup().addTo(map);map.setView([45.52,-73.6],11)}
+if(!map){map=LF.map("map");LF.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"© OpenStreetMap"}).addTo(map);mk=LF.layerGroup().addTo(map);map.setView([45.52,-73.6],11);const lc=LF.control({position:"topleft"});lc.onAdd=()=>{const b=LF.DomUtil.create("div","leaflet-bar"),a=LF.DomUtil.create("a","",b);a.href="#";a.innerHTML="📍";a.title=L().loc;a.setAttribute("role","button");a.setAttribute("aria-label",L().loc);a.style.cssText="font-size:16px;line-height:30px;text-align:center";LF.DomEvent.disableClickPropagation(b);a.onclick=e=>{e.preventDefault();locate()};return b};lc.addTo(map)}
 map.invalidateSize();mk.clearLayers();const l=D.filter(visG),base=l.length+(l.length>1?L().many:L().one);$("cnt").textContent=base;
 const add=d=>{const p=pos(d);if(!p)return;LF.circleMarker(p,{radius:8,color:"#fff",weight:2,fillColor:C[d.s],fillOpacity:.95}).bindPopup(`<div class="lp"><b>${esc(d.n)}</b><span>${esc(T(d))}</span><span>${esc(d.a)}</span><span><a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(d.n+", "+d.a+", Québec")}" target="_blank" rel="noopener">Google Maps ↗</a></span></div>`).addTo(mk)};
 const fit=()=>{const ps=l.map(pos).filter(Boolean),c=ps.filter(p=>p[0]>45.40&&p[0]<45.62&&p[1]>-73.80&&p[1]<-73.45),q=c.length>=Math.min(5,ps.length)?c:ps;if(q.length)map.fitBounds(q,{padding:[30,30],maxZoom:15})};
@@ -382,6 +382,11 @@ try{const nm=async b=>(await fetch("https://nominatim.openstreetmap.org/search?f
 if(j[0]){GC[d.n]=[+j[0].lat,+j[0].lon];try{localStorage.setItem("geo3",JSON.stringify(GC))}catch(e){}if(tk==gtok)add(d)}else gfail.add(d.n)}catch(e){gfail.add(d.n)}
 await new Promise(r=>setTimeout(r,1100))}
 if(tk==gtok){$("cnt").textContent=base;fit()}})()})}
+let me=null;
+function locate(){const LF=window.L;if(!navigator.geolocation){$("cnt").textContent=L().locerr;return}
+navigator.geolocation.getCurrentPosition(g=>{const p=[g.coords.latitude,g.coords.longitude],ok=p[0]>45.2&&p[0]<45.8&&p[1]>-74.2&&p[1]<-73.2;
+if(me)me.remove();me=LF.layerGroup([LF.circle(p,{radius:g.coords.accuracy,color:"#2a7de1",weight:1,fillOpacity:.12}),LF.circleMarker(p,{radius:7,color:"#fff",weight:2,fillColor:"#2a7de1",fillOpacity:1}).bindPopup(L().here)]).addTo(map);
+if(ok)map.setView(p,15);else $("cnt").textContent=L().far},()=>{$("cnt").textContent=L().locerr},{enableHighAccuracy:true,timeout:10000})}
 $("mv").onclick=()=>{view=view=="map"?"list":"map";render();scrollTo(0,0)};
 $("q").oninput=render;$("so").onchange=render;
 $("ch").onclick=e=>{const b=e.target.closest("button");if(b){sec=+b.dataset.s;render()}};
